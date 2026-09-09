@@ -57,6 +57,15 @@ Every other package's exact number, name, and boundary is this pass's own synthe
 matter. It is offered as a durable, evidence-grounded planning artifact in its own right,
 correctly labeled as such.
 
+**Status of this reconstruction, stated plainly (surgical correction pass, 2026-09-09)**:
+this document, together with the Foundation Implementation Plan it companions, is now the
+proposed implementation-planning artifact for WP0–WP9, submitted for owner authorization.
+It is not a decision, not evidence of what the original `planner` agent actually said,
+and its existence is not itself an approval of anything it describes. Every UNKNOWN named
+throughout this document and in "What this document does not do" remains unresolved by
+this status statement — owner sign-off is still required per each package's own
+human-gate status below and per the Foundation Implementation Plan's blockers.
+
 **Classification key used throughout**: **FACT** (established directly by ADR-001,
 Phase 8A, a spike, or the Security Floor) / **RECOMMENDATION** (this pass's own proposed
 scope or sequencing, not binding) / **gate** (requires owner sign-off per the
@@ -86,7 +95,11 @@ HIGH/CRITICAL; everything else is LOW, by exclusion, not by a separate checklist
 **Scope**: local git repository initialization; pnpm workspace layout (`apps/`,
 `modules/` empty, `packages/`, `migrations/`, `test/`, `docker/` per the plan's §2);
 boundary-lint (dependency-cruiser) configuration; `packages/kernel` and `packages/obs`
-as local files, not packages, per Adversarial Correction Pass correction 7;
+as local files, not packages, per Adversarial Correction Pass correction 7 — **WP0
+creates both as empty/stub scaffolding only** (module location and export shape); for
+`packages/obs` specifically, the actual allowlist-by-construction logging behavior and
+request/job-id propagation are implemented in WP8, not duplicated here (see WP8 Scope) —
+this is a single artifact with two build steps, not two independent creations;
 `packages/config` as a documented per-entrypoint convention, not a standing package, per
 the same correction; `packages/db`'s pool + tenant-context primitive under
 mechanism-neutral naming (`withTenantContext`/`withElevatedAccess`, per correction 5) —
@@ -113,11 +126,24 @@ package that delivers the first real page (no page exists yet to exercise it); t
 eventual Playwright requirement itself (Phase 8A §18 DECISION) is not removed from the
 broader plan, only relocated out of WP0.
 
-**Human gate**: **No**, for the local-only-scaffolding portion listed above — this is
-LOW/reversible work not touching a HIGH domain. **Yes**, for any sub-step that would
-create tenant-scoped schema (routes to WP3/WP4 instead, gated) or construct/interpret
-local wall-clock booking times (routes to a future booking-domain package, gated per
-correction 6).
+**Human gate**: **No**, for the local-only-scaffolding portion listed above — **not**
+because this work avoids a HIGH-risk domain. It does not: the `packages/db`
+tenant-context primitive scaffolded here touches domain 1 (tenant isolation) directly,
+and the Authority/Risk/Routing Model §2.1 classification is fixed and not overridable by
+reversibility — nothing in this package's scope is "LOW because it's tenant-context
+work." The gate is withheld at this stage because the specific work is, simultaneously:
+local only (a repository not yet pushed anywhere); unmerged; undeployed; mechanism-neutral
+(the seam's naming and shape commit to no candidate mechanism — correction 5); and
+explicitly prohibited from implementing `SET LOCAL`, RLS-specific policies/roles,
+`BYPASSRLS`, or any other mechanism-specific tenant-isolation behavior. **The human gate
+activates before merge/deploy** (the standard framing the Authority/Risk/Routing Model
+§3.2 applies to security-sensitive work), **and also immediately, mid-implementation, if
+mechanism-specific tenant-isolation behavior is introduced at any point before that** —
+the gate does not wait for a merge step to catch a mechanism-specific implementation that
+should never have been written under WP0's scope. Separately, and unconditionally,
+**Yes**, for any sub-step that would create tenant-scoped schema (routes to WP3/WP4
+instead, gated) or construct/interpret local wall-clock booking times (routes to a future
+booking-domain package, gated per correction 6).
 
 **Routing chain (LOW baseline, per §3.1)**: implement → self-check against ADR-001/
 Phase 8A/Security Floor → verification-loop (build/type/lint where applicable) →
@@ -127,10 +153,16 @@ knowledge capture if durable.
 originally-named blockers gates this package's local-only scope.
 
 **Verification required**: boundary-lint fires on a deliberate violation (named proof,
-FACT-required per the original plan §4); no Verification Evidence Record required for
-purely LOW sub-steps, but a record should be produced for the package as a whole given
-its adjacency to several HIGH-risk-adjacent domains (secrets/config, deployment shape),
-per Adversarial Correction Pass correction 11.
+FACT-required per the original plan §4); transaction-primitive rollback — `packages/db`'s
+begin/commit/rollback mechanics actually roll back on failure, at the primitive level
+(Adversarial Correction Pass correction 11's "Database" domain list names this proof;
+this is the primitive-level check only — the full module-level service-boundary rollback
+proof needs a real module-level service, which is out of WP0–WP9's foundation scope per
+`modules/` being "created on demand, empty at foundation time," and belongs to the first
+work package that builds one); no Verification Evidence Record required for purely LOW
+sub-steps, but a record should be produced for the package as a whole given its adjacency
+to several HIGH-risk-adjacent domains (secrets/config, deployment shape), per Adversarial
+Correction Pass correction 11.
 
 ---
 
@@ -180,7 +212,9 @@ owner confirmation (not a full design decision) per correction 2.
 **Verification required**: migration up/down/up reversibility (named proof, though
 Adversarial Review's Review 7 correctly notes this is of most value once a real
 data-shape risk exists — still worth exercising once against the job table); the job
-protocol reproducing spike 4's result inside real application code, including the
+protocol reproducing spike 4's result inside real application code — named explicitly,
+per Adversarial Correction Pass correction 11's "Jobs" domain list, rather than left as a
+generic "protocol works" check: claim, lease, fence, and `SKIP LOCKED` behavior, plus the
 incremental-checkpoint case specifically (Phase 8A §22 explicit requirement).
 
 ---
@@ -200,11 +234,19 @@ this either be confirmed mechanism-neutral or corrected before being treated as 
 **Does not include**: selecting RLS or an alternative — that selection is explicitly out
 of this package's scope.
 
-**Human gate**: **No**, for the scaffolding/harness work itself, provided it remains
-demonstrably mechanism-neutral (this is the point of building it now, per correction
-1/16). **Yes**, if at any point building the harness requires committing to a specific
-mechanism's internals to proceed — at that point the work has crossed into WP4's
-gated territory and should stop and escalate.
+**Human gate**: **No**, for the scaffolding/harness work itself — this is not a claim
+that the work avoids a HIGH-risk domain (this package's risk tier above is already,
+correctly, domain 1). The gate is withheld for the same reasons as WP0's scaffolding: the
+work is local only, unmerged, undeployed, demonstrably mechanism-neutral (per Scope's
+"does not include" line and correction 5), and explicitly prohibited from implementing
+`SET LOCAL`, RLS-specific policies/roles, `BYPASSRLS`, or any other mechanism-specific
+tenant-isolation behavior. **The human gate activates before merge/deploy**, consistent
+with WP0, **and also immediately** if at any point building the harness requires
+committing to a specific mechanism's internals to proceed — at that point the work has
+crossed into WP4's gated territory and should stop and escalate, not continue until a
+merge step surfaces the problem. The underlying tenant-isolation mechanism decision itself
+is untouched by this package either way: RLS remains a POSSIBLE, spike-1-validated
+candidate, not selected here or anywhere in this document.
 
 **Blockers**: none for mechanism-neutral scaffolding; the mechanism *selection* itself
 (blocker 1) is not this package's job.
@@ -282,6 +324,27 @@ construction pattern spike 3 validated (direct construction, not a day-cursor-pl
 minutes shape — spike 3's own explicit prohibition, cited in Adversarial Correction Pass
 correction 6).
 
+**Explicitly out of scope for WP6, and for WP0–WP9 as a whole: the recurring-booking
+series/occurrence data model.** ADR-001 confirms recurring bookings are a v1 requirement
+and confirms the series/occurrence model is required scope, but states plainly that the
+model was "not designed by this ADR." No package in this foundation set designs it
+either — WP6's scope above is limited to the event-type/availability skeleton and the
+first wall-clock-construction code path, not the recurring-series shape, and this
+document does not invent that design. **Chosen resolution (stated explicitly, per this
+correction's own instruction to explain the choice)**: recurring-series/occurrence
+implementation is deferred to the first booking-domain vertical slice — a future work
+package outside WP0–WP9, scoped once foundation work completes — rather than being
+homed in WP6 by default. This is chosen over housing it in WP6 because WP6's own scope
+(above) was never written to include it, and stretching WP6 to cover it here would
+itself be scope expansion beyond what this correction pass is authorized to do; a
+narrower, already-scoped package should not silently absorb a materially different
+design task merely because it is the first booking-adjacent package. **Preserved as
+UNKNOWN, unchanged by this correction**: the exact series/occurrence data model; the
+recurring atomicity model (all-or-nothing vs. explicit partial success — spike 2's own
+finding that this is an application transaction-boundary choice). Both must be designed
+and owner-approved before the recurring-booking vertical slice begins, not decided
+implicitly by whatever schema WP6 happens to scaffold for non-recurring event types.
+
 **Human gate**: **Yes**, specifically for the local-time-construction portion — per
 Adversarial Correction Pass correction 6, this package cannot proceed past
 wall-clock-construction work until the ambiguous/nonexistent-local-time product policy
@@ -305,20 +368,34 @@ own Adversarial Correction Pass §6, not the same as the single-construction cas
 
 **Risk tier**: HIGH/CRITICAL — domain 2 (authentication/authorization).
 
-**Scope**: the session-cookie auth *architecture* (Phase 8A §18, DECISION scope) —
-`users`/`memberships` kept schematically separate (already built in WP4); CSRF-token
-middleware capability; role-check scaffolding. **Does not include**: selecting a
-concrete auth library — Phase 8A §19/§20 and the Phase 8B Owner Approval both explicitly
-leave this UNKNOWN, deferred to a future implementation-planning phase, not this
-foundation pass.
+**Scope**: the session-cookie auth *architecture* (Phase 8A §18, DECISION scope) — the
+conceptual separation of identity/membership/authorization (Phase 8A §11), CSRF-token
+middleware capability, and role-check scaffolding, all designed against the *shape* of
+`users`/`memberships` rather than requiring that schema to already exist. **Does not
+include**: selecting a concrete auth library — Phase 8A §19/§20 and the Phase 8B Owner
+Approval both explicitly leave this UNKNOWN, deferred to a future implementation-planning
+phase, not this foundation pass. **Also does not include**: actual integration against a
+real `users`/`memberships` table set — that table set is WP4's deliverable, not something
+already built by the time WP7's architecture work starts (WP4 is itself gated on blocker
+1 and may not have completed).
 
 **Human gate**: **Yes**, before merge/deploy, per §3.2's "New feature,
 tenant/auth/security-sensitive" row — routes through the Security Floor — Operational
-Review Process and `security-reviewer`.
+Review Process and `security-reviewer`. Applies to both sub-scopes below.
 
-**Blockers**: none beyond the standing security-sensitive-feature gate; does not require
-the auth library to be selected to build the architecture-level scaffolding (identity/
-membership/authorization separation), consistent with Phase 8A §11.
+**Blockers**: split by sub-scope, not one answer for the whole package —
+- **Architecture-level scaffolding** (session-cookie architecture, CSRF capability,
+  role-check scaffolding, designed against the *shape* of `users`/`memberships`): **none**
+  — may proceed without the auth library being selected and without WP4 having completed,
+  consistent with Phase 8A §11.
+- **Actual integration against real `users`/`memberships` data**: **depends on WP4**. WP4
+  is itself blocked by blocker 1 (the tenant-isolation mechanism — see WP4's own entry
+  above), so this integration work **inherits that same dependency**: it cannot wire
+  against real tenant/membership schema before WP4 delivers it, and WP4 cannot begin
+  before the owner resolves blocker 1.
+
+Auth-library selection remains **UNKNOWN** — not decided by this package or by this
+correction pass.
 
 **Verification required**: session-cookie mechanics (HTTP-only, secure) capability
 check; CSRF-token capability check; auth/authz-boundary proof once real endpoints exist.
@@ -330,8 +407,11 @@ check; CSRF-token capability check; auth/authz-boundary proof once real endpoint
 **Risk tier**: HIGH/CRITICAL — domain 9 (security controls generally: headers, boot
 validation) and domain 6 (secrets, via the boot gate's own subject matter).
 
-**Scope**: the allowlist-by-construction logger (as a local file per correction 7, not a
-standing package, until a second consumer justifies extraction); browser-side security
+**Scope**: the allowlist-by-construction logging behavior and request/job-id
+propagation, implemented inside the `packages/obs` local file WP0 already scaffolds as an
+empty stub (per correction 7) — **WP8 fills in that file's real logic; it does not
+create a second, independent `packages/obs` file** (see WP0 Scope, which now states this
+split explicitly); browser-side security
 headers (CSP, `frame-ancestors`/`X-Frame-Options`, HSTS, `X-Content-Type-Options` —
 Security Floor item 14, re-derived rather than copied from Cal.diy's `csp.ts`, per
 Adversarial Correction Pass correction 3's reuse-gate framing); production-configuration
@@ -348,11 +428,12 @@ routes through the Security Floor process) — **No**, for the logger scaffoldin
 (re-derive, copy nothing — Adversarial Correction Pass correction 3), so neither named
 upstream pattern needs clearance to proceed with a re-derived version.
 
-**Verification required**: the boot gate refuses three specific bad configurations
-(named proof from the original plan, **currently unspecified which three** — this
-package must name them: e.g. a missing signing secret, an insufficiently-random
-encryption key, a database URL without verified TLS — per the Security Floor item 15's
-own evidence base); secret handling proof (no secret in logs/source/debug output).
+**Verification required**: the boot gate refuses each of the three specific bad
+configurations already named in this package's Scope above (Security Floor item 15's own
+evidence base) — (a) a missing, placeholder, or insufficiently-random signing secret; (b)
+an unverified-TLS database URL; (c) an active demo/local provider fallback — as three
+distinct proofs, one per condition, not one generic "boot gate works" check; secret
+handling proof (no secret in logs/source/debug output).
 
 ---
 
@@ -392,7 +473,7 @@ check and produces a real, non-illustrative Verification Evidence Record, not an
 | 4 | Tenant/membership schema + enrolment | HIGH | Yes, always | Blocker 1 |
 | 5 | Worker-role separation + job-table confirmation | HIGH | Yes (secrets) | None (beyond standing gate) |
 | 6 | Booking-domain skeleton (local-time-gated) | HIGH | Yes (local-time construction only) | Local-time policy (new gate, correction 6) |
-| 7 | Auth mechanism scaffolding | HIGH | Yes, before merge/deploy | None (library selection deferred separately) |
+| 7 | Auth mechanism scaffolding | HIGH | Yes, before merge/deploy | None for architecture scaffolding; integration against real users/memberships inherits Blocker 1 via WP4 |
 | 8 | Observability, headers, boot gate | HIGH | Yes (boot-gate specifics) | None (licensing closed by default) |
 | 9 | Verification harness + evidence records | LOW (wiring) | No | WP1 (CI-wired portion only) |
 
@@ -401,13 +482,16 @@ check and produces a real, non-illustrative Verification Evidence Record, not an
 ## What this document does not do
 
 It does not select the tenant-isolation mechanism, the auth library, the recurring-series
-atomicity model, the local-time product policy, the calendar/notification provider, or
-the canonical product name — every UNKNOWN named in ADR-001, Phase 8A, and the
-Adversarial Correction Pass remains exactly as open after this document as before it. It
-does not authorize any work package to begin — authorization is governed by the
-Foundation Implementation Plan's own Adversarial Correction Pass (correction 16) and by
-each package's stated human-gate status above. It does not create any repository,
-migration, or application code.
+atomicity model, the exact recurring-series/occurrence data model, the local-time product
+policy, the calendar/notification provider, or the canonical product name — every UNKNOWN
+named in ADR-001, Phase 8A, and the Adversarial Correction Pass remains exactly as open
+after this document as before it. It does not design the recurring-booking
+series/occurrence model or select which future work package builds it beyond stating,
+in WP6 above, that this is deferred to the first booking-domain vertical slice and is
+outside WP0–WP9's own scope. It does not authorize any work package to begin —
+authorization is governed by the Foundation Implementation Plan's own Adversarial
+Correction Pass (correction 16) and by each package's stated human-gate status above. It
+does not create any repository, migration, or application code.
 
 ## Related
 

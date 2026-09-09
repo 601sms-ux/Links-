@@ -74,7 +74,12 @@ calquartz/
                    delivers the first real page (see the WP0–WP9 companion file). The
                    eventual Playwright requirement itself is not removed from the
                    broader plan (Phase 8A §18 DECISION), only its WP0 scaffolding.
-  docker/        one Dockerfile, three entrypoints (api/web/worker)
+  docker/        one Dockerfile, three entrypoints (api/web/worker) — process count
+                 per ADR-001 ("web + worker"); the Fastify/Next.js entrypoint split
+                 follows Phase 8A §5's stack-selection rationale (Adversarial
+                 Correction Pass correction 10), not an ADR-001-only selection —
+                 ADR-001's own "web + worker" language alone would also permit a
+                 simpler two-process shape
 ```
 
 Boundary rules enforced by lint/dependency-cruiser, not convention alone:
